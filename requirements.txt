@@ -1,0 +1,38 @@
+# Vocaluity - AI Vocal Detection Prototype
+# Requirements file
+
+# Core ML/DL
+torch>=2.0.0
+torchaudio>=2.0.0
+tensorflow>=2.13.0
+scikit-learn>=1.3.0
+
+# Audio Processing
+librosa>=0.10.0
+soundfile>=0.12.1
+pydub>=0.25.1
+audioread>=3.0.0
+
+# Data Handling
+numpy>=1.24.0
+pandas>=2.0.0
+datasets>=2.14.0  # HuggingFace datasets
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Web Interface
+streamlit>=1.28.0
+
+# Utilities
+tqdm>=4.66.0
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+
+# Audio download utilities (for YouTube-based datasets)
+yt-dlp>=2023.10.13
+
+# Optional: For advanced features
+# crepe>=0.0.13  # Pitch detection
+# demucs>=4.0.0  # Source separation
