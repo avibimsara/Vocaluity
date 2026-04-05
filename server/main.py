@@ -30,9 +30,11 @@ CLASS_NAMES = BINARY_CLASSES
 
 app = FastAPI(title="Vocaluity API", version="1.0.0")
 
+_allowed_origins = os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
