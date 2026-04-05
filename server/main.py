@@ -17,9 +17,7 @@ import matplotlib.pyplot as plt
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-# ---------------------------------------------------------------------------
-# Add project root to sys.path so we can import config / model / feature_extractor
-# ---------------------------------------------------------------------------
+# Add project root to sys.path to import config / model / feature_extractor
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -27,15 +25,9 @@ from config import DEVICE, SAMPLE_RATE, MODELS_DIR, BINARY_CLASSES
 from feature_extractor import AudioFeatureExtractor
 from model import get_model
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
 NUM_CLASSES = 2
 CLASS_NAMES = BINARY_CLASSES
 
-# ---------------------------------------------------------------------------
-# App
-# ---------------------------------------------------------------------------
 app = FastAPI(title="Vocaluity API", version="1.0.0")
 
 app.add_middleware(
@@ -46,9 +38,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------------------------
 # Model loading (runs once at import / startup)
-# ---------------------------------------------------------------------------
 _model = None
 _extractor = None
 _model_name = "unknown"
@@ -110,9 +100,7 @@ def _load_model():
 
 _load_model()
 
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
 
 ALLOWED_EXTENSIONS = {".wav", ".mp3", ".flac", ".ogg", ".m4a"}
 
@@ -138,11 +126,7 @@ def _fig_to_base64(fig) -> str:
     return base64.b64encode(buf.read()).decode("utf-8")
 
 
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
-
-
+# GET:Health check
 @app.get("/health")
 def health():
     return {
@@ -151,7 +135,7 @@ def health():
         "model_loaded": _model is not None,
     }
 
-
+# GET: Model info
 @app.get("/model/info")
 def model_info():
     return {
@@ -160,7 +144,7 @@ def model_info():
         "classes": CLASS_NAMES,
     }
 
-
+# POST: Predict class from uploaded audio file
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     tmp_path = await _save_upload(file)
@@ -186,7 +170,7 @@ async def predict(file: UploadFile = File(...)):
     finally:
         os.unlink(tmp_path)
 
-
+# POST: Generate visualizations (waveform, spectrogram, etc.) from uploaded audio file
 @app.post("/visualize")
 async def visualize(file: UploadFile = File(...)):
     tmp_path = await _save_upload(file)

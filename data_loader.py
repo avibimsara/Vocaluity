@@ -1,5 +1,3 @@
-# data_loader.py - Dataset Loading for Vocaluity
-
 import os
 import random
 import numpy as np
@@ -23,25 +21,10 @@ from feature_extractor import AudioFeatureExtractor
 
 
 class VocaluityDataset(Dataset):
-    """
-    PyTorch Dataset for Vocaluity AI Vocal Detection.
-
-    Supports:
-    - FakeMusicCaps + MusicCaps combined datasets
-    - Custom real/AI audio directories
-    - Binary (real/fake) or multi-class classification
-    - SpecAugment (time + frequency masking) for training regularisation
-    """
+    
 
     def __init__(self, file_paths, labels, extractor=None, transform=None, augment=False):
-        """
-        Args:
-            file_paths: List of audio file paths
-            labels:     List of corresponding integer labels
-            extractor:  AudioFeatureExtractor instance (created if None)
-            transform:  Optional callable applied to the feature tensor
-            augment:    If True apply SpecAugment during __getitem__
-        """
+        
         self.file_paths = file_paths
         self.labels = labels
         self.extractor = extractor or AudioFeatureExtractor()
@@ -100,31 +83,10 @@ class VocaluityDataset(Dataset):
         return features, label
 
 
-# ---------------------------------------------------------------------------
+
 # Dataset loaders
-# ---------------------------------------------------------------------------
-
 def load_fakemusiccaps(data_path=None, binary=True):
-    """
-    Load FakeMusicCaps dataset only (no external MusicCaps folder required).
-
-    Expected structure:
-    fakemusiccaps/
-    ├── real/              # MusicCaps audio downloaded via download_musiccaps.py
-    ├── MusicGen_medium/
-    ├── musicldm/
-    ├── audioldm2/
-    ├── stable_audio_open/
-    └── mustango/
-
-    Args:
-        data_path: Path to the fakemusiccaps directory (default: FAKEMUSICCAPS_PATH)
-        binary:    True  → binary labels  (real=0, ai_generated=1)
-                   False → multi-class AI attribution (5 generator classes)
-
-    Returns:
-        file_paths, labels, label_map
-    """
+    
     data_path = Path(data_path or FAKEMUSICCAPS_PATH)
 
     if not data_path.exists():
@@ -196,19 +158,7 @@ def load_fakemusiccaps(data_path=None, binary=True):
 
 
 def load_musiccaps(data_path=None):
-    """
-    Load real audio from a standalone MusicCaps directory.
-
-    Expects a flat directory of .wav files (e.g. downloaded via yt-dlp).
-    Returns an empty list if the directory does not exist so callers can
-    handle its absence gracefully.
-
-    Args:
-        data_path: Path to the musiccaps directory (default: MUSICCAPS_PATH)
-
-    Returns:
-        file_paths (list[str]), labels (list[int])  – all labelled 0 (real)
-    """
+    
     data_path = Path(data_path or MUSICCAPS_PATH)
 
     if not data_path.exists():
@@ -226,32 +176,7 @@ def load_musiccaps(data_path=None):
 
 
 def load_combined_dataset(fakemusiccaps_path=None, musiccaps_path=None, binary=True):
-    """
-    Load FakeMusicCaps + MusicCaps (if available) as a combined dataset.
-
-    Binary mode  (recommended):
-        Real (0)  → fakemusiccaps/real  +  musiccaps/ (if present)
-        AI   (1)  → all AI-generator folders in fakemusiccaps/
-                    (MusicGen_medium, musicldm, audioldm2,
-                     stable_audio_open, mustango, suno)
-
-    Multi-class mode:
-        real              → 0
-        MusicGen_medium   → 1
-        musicldm          → 2
-        audioldm2         → 3
-        stable_audio_open → 4
-        mustango          → 5
-        suno              → 6  (if folder exists)
-
-    Args:
-        fakemusiccaps_path: Override for FAKEMUSICCAPS_PATH
-        musiccaps_path:     Override for MUSICCAPS_PATH
-        binary:             True for binary, False for multi-class
-
-    Returns:
-        file_paths, labels, label_map
-    """
+    
     fakemusiccaps_path = Path(fakemusiccaps_path or FAKEMUSICCAPS_PATH)
     musiccaps_path     = Path(musiccaps_path     or MUSICCAPS_PATH)
 
@@ -272,7 +197,7 @@ def load_combined_dataset(fakemusiccaps_path=None, musiccaps_path=None, binary=T
     if binary:
         label_map = {"real": 0, "ai_generated": 1}
 
-        # --- Real samples: fakemusiccaps/real ---
+        # Real samples: fakemusiccaps/real
         real_path = fakemusiccaps_path / "real"
         fmc_real = 0
         if real_path.exists():
@@ -281,7 +206,7 @@ def load_combined_dataset(fakemusiccaps_path=None, musiccaps_path=None, binary=T
                 labels.append(0)
             fmc_real = labels.count(0)
 
-        # --- Real samples: standalone musiccaps/ (optional) ---
+        # Real samples: standalone musiccaps/ (optional)
         mc_fps, mc_lbls = load_musiccaps(musiccaps_path)
         file_paths.extend(mc_fps)
         labels.extend(mc_lbls)
@@ -297,7 +222,7 @@ def load_combined_dataset(fakemusiccaps_path=None, musiccaps_path=None, binary=T
                 "Run download_musiccaps.py to populate fakemusiccaps/real/."
             )
 
-        # --- AI samples ---
+        # AI samples
         for folder in ai_folders:
             folder_path = fakemusiccaps_path / folder
             if folder_path.exists():
@@ -403,34 +328,11 @@ def load_custom_dataset(real_dir, ai_dir):
     return file_paths, labels, label_map
 
 
-# ---------------------------------------------------------------------------
-# Data loaders
-# ---------------------------------------------------------------------------
 
+# Data loaders
 def create_data_loaders(file_paths, labels, batch_size=BATCH_SIZE,
                         train_split=TRAIN_SPLIT, val_split=VAL_SPLIT):
-    """
-    Create train / validation / test DataLoaders split by song ID (ytid).
-
-    For FakeMusicCaps/MusicCaps data, every filename stem is a YouTube ID
-    shared across real and all AI-generated versions of the same clip.
-    Splitting by ytid guarantees no song appears in more than one split,
-    forcing the model to learn AI-generation artefacts rather than
-    song-specific patterns.
-
-    Training set:   SpecAugment enabled, shuffled
-    Val / Test set: No augmentation, deterministic order
-
-    Args:
-        file_paths:   List of audio file paths
-        labels:       List of integer labels
-        batch_size:   Batch size (default from config)
-        train_split:  Fraction allocated to training
-        val_split:    Fraction allocated to validation
-
-    Returns:
-        train_loader, val_loader, test_loader, class_weights (FloatTensor)
-    """
+    
     # ---- Split by ytid (song ID = filename stem) -------------------------
     ytids = [Path(fp).stem for fp in file_paths]
     unique_ytids = list(set(ytids))
@@ -470,7 +372,7 @@ def create_data_loaders(file_paths, labels, batch_size=BATCH_SIZE,
     print(f"  Unique songs  Train: {len(train_ytids)}, "
           f"Val: {len(val_ytids)}, Test: {len(test_ytids)}")
 
-    # ---- Class weights (computed on training labels only) ----------------
+    # Class weights (computed on training labels only)
     train_labels_array = np.array(train_labels)
     classes = np.unique(train_labels_array)
     raw_weights = compute_class_weight(
@@ -481,7 +383,7 @@ def create_data_loaders(file_paths, labels, batch_size=BATCH_SIZE,
     class_weights = torch.FloatTensor(raw_weights)
     print(f"Class weights: { {int(c): round(float(w), 4) for c, w in zip(classes, raw_weights)} }")
 
-    # ---- Datasets --------------------------------------------------------
+    # Datasets:
     #  augment=True  → SpecAugment applied to training set only
     #  augment=False → clean features for validation and test
     train_dataset = VocaluityDataset(train_files, train_labels, augment=True)
@@ -563,17 +465,3 @@ class CachedDataset(Dataset):
         features = torch.from_numpy(features)
         label    = row['label']
         return features, label
-
-
-# ---------------------------------------------------------------------------
-# Quick test
-# ---------------------------------------------------------------------------
-if __name__ == "__main__":
-    print("Testing data loader...")
-    print("\nTo use with real data:")
-    print("1. Download FakeMusicCaps from https://zenodo.org/records/15063698")
-    print("2. Extract to data/raw/fakemusiccaps/")
-    print("3. Run download_musiccaps.py to populate fakemusiccaps/real/")
-    print("4. (Optional) Place extra real .wav files in data/raw/musiccaps/")
-    print("5. run: file_paths, labels, label_map = load_combined_dataset(binary=True)")
-    print("6. run: train_loader, val_loader, test_loader, class_weights = create_data_loaders(file_paths, labels)")

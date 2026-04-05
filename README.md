@@ -6,7 +6,7 @@ This guide will help you set up and run the Vocaluity AI vocal detection prototy
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 vocaluity/
@@ -29,7 +29,7 @@ vocaluity/
 
 ---
 
-## 🚀 Setup Instructions
+## Setup Instructions
 
 ### Step 1: Create Virtual Environment
 
@@ -80,17 +80,7 @@ streamlit run app/streamlit_app.py
 
 ---
 
-## 📊 Dataset Options Comparison
-
-| Dataset | Ease of Use | Size | Best For |
-|---------|-------------|------|----------|
-| FakeMusicCaps | ⭐⭐⭐⭐⭐ | 27K tracks | Full music detection |
-| ASVspoof 2019 | ⭐⭐⭐⭐ | Large | Voice-only detection |
-| Custom (Suno + Real) | ⭐⭐⭐ | Variable | Specific artists |
-
----
-
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues:
 
@@ -100,7 +90,7 @@ streamlit run app/streamlit_app.py
 
 ---
 
-## 📚 References
+## References
 
 - FakeMusicCaps Paper: https://arxiv.org/abs/2409.10684
 - Deezer Deepfake Detector: https://github.com/deezer/deepfake-detector

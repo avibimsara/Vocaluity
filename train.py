@@ -1,5 +1,3 @@
-# train.py - Training Script for Vocaluity
-
 import os
 import sys
 from pathlib import Path
@@ -68,10 +66,6 @@ class Trainer:
         self.best_val_acc   = 0.0
         self.best_model_path = None
 
-    # ------------------------------------------------------------------
-    # Core train / validate methods
-    # ------------------------------------------------------------------
-
     def train_epoch(self):
         """Train for one epoch and return (loss, accuracy)."""
         self.model.train()
@@ -130,10 +124,6 @@ class Trainer:
         epoch_loss = running_loss / len(loader)
         epoch_acc  = accuracy_score(all_labels, all_preds)
         return epoch_loss, epoch_acc, all_preds, all_labels, all_probs
-
-    # ------------------------------------------------------------------
-    # Full training loop with early stopping
-    # ------------------------------------------------------------------
 
     def train(self, epochs=EPOCHS, save_best=True, early_stopping_patience=10):
         """
@@ -197,10 +187,6 @@ class Trainer:
         print("\nTraining complete!")
         return self.history
 
-    # ------------------------------------------------------------------
-    # Evaluation
-    # ------------------------------------------------------------------
-
     def evaluate(self, loader=None):
         """Evaluate model on test set and print full metrics."""
         if loader is None:
@@ -239,10 +225,6 @@ class Trainer:
 
         return metrics, preds, labels, probs
 
-    # ------------------------------------------------------------------
-    # Checkpoint helpers
-    # ------------------------------------------------------------------
-
     def _save_model(self, epoch, val_acc):
         """Save model checkpoint."""
         MODELS_DIR.mkdir(parents=True, exist_ok=True)
@@ -266,10 +248,6 @@ class Trainer:
         self.history = checkpoint.get('history', self.history)
         print(f"Loaded model from {filepath}")
         return checkpoint.get('val_acc', 0)
-
-    # ------------------------------------------------------------------
-    # Plotting
-    # ------------------------------------------------------------------
 
     def plot_history(self, save_path=None):
         """Plot training / validation loss and accuracy curves."""
@@ -331,34 +309,22 @@ class Trainer:
         return fig
 
 
-# ===========================================================================
-# Main training entry point
-# ===========================================================================
-
 def main():
     print("=" * 60)
     print("VOCALUITY - AI Vocal Detection Training")
     print("=" * 60)
 
-    # ============================================================
-    # CONFIGURATION
-    # ============================================================
-    # True  → merge FakeMusicCaps + MusicCaps (recommended now that
-    #          real audio is available in fakemusiccaps/real/)
-    # False → use FakeMusicCaps AI generators only (multi-class)
-    USE_BOTH_DATASETS = True
 
-    # True  → binary classification: real (0) vs AI (1)
-    # False → multi-class: identify which AI generator produced the audio
-    #         When USE_BOTH_DATASETS=True, multi-class includes a "real" class.
-    BINARY_CLASSIFICATION = True
+    USE_BOTH_DATASETS = True # Set to True to train on combined dataset (binary or multi-class)
+    # USE_BOTH_DATASETS = False  # Set to False to train on FakeMusicCaps only (multi-class)
+
+    BINARY_CLASSIFICATION = True # Set to True for binary classification (real vs AI)
+    # BINARY_CLASSIFICATION = False # Set to False for multi-class classification (real + 4 AI generators)
 
     # Model architecture: 'simple', 'resnet', or 'lightweight'
     MODEL_TYPE = 'simple'
 
-    # ============================================================
-    # LOAD DATASET
-    # ============================================================
+    # Load dataset
     if USE_BOTH_DATASETS:
         print("\nLoading combined FakeMusicCaps + MusicCaps dataset...")
         try:
@@ -378,27 +344,21 @@ def main():
             print(f"\n{e}")
             return
 
-    # ============================================================
-    # CREATE DATA LOADERS  (returns class_weights for imbalance)
-    # ============================================================
+    # Crete data loaders
     print("\nCreating data loaders...")
     train_loader, val_loader, test_loader, class_weights = create_data_loaders(
         file_paths, labels,
         batch_size=BATCH_SIZE
     )
 
-    # ============================================================
-    # CREATE MODEL
-    # ============================================================
+    # Model creation
     num_classes  = len(label_map)
     class_names  = list(label_map.keys())
 
     print(f"\nCreating '{MODEL_TYPE}' model with {num_classes} classes: {class_names}")
     model = get_model(MODEL_TYPE, num_classes=num_classes)
 
-    # ============================================================
-    # TRAIN
-    # ============================================================
+    # Train
     trainer = Trainer(
         model, train_loader, val_loader, test_loader,
         num_classes=num_classes,
@@ -411,18 +371,14 @@ def main():
         early_stopping_patience=10    # stop if val_loss stalls for 10 epochs
     )
 
-    # ============================================================
-    # EVALUATE  (reload best saved weights before testing)
-    # ============================================================
+    # Evaluate on test set using best model (reload weights from best checkpoint)
     if trainer.best_model_path:
         print(f"\nReloading best model weights from: {trainer.best_model_path.name}")
         trainer.load_model(trainer.best_model_path)
 
     metrics, preds, labels, probs = trainer.evaluate()
 
-    # ============================================================
-    # SAVE RESULTS
-    # ============================================================
+    # Save results and plots
     results_dir = Path("results")
     results_dir.mkdir(exist_ok=True)
 

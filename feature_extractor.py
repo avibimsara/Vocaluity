@@ -1,5 +1,3 @@
-# feature_extractor.py - Audio Feature Extraction for Vocaluity
-
 import numpy as np
 import librosa
 import librosa.display

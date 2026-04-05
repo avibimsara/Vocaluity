@@ -1,12 +1,3 @@
-# download_suno.py - Download Suno AI-generated clips for Vocaluity training
-#
-# Source:  nyuuzyou/suno on HuggingFace  (CC0 licence)
-# Output:  data/raw/fakemusiccaps/suno/*.wav
-#
-# Uses HTTP range requests to fetch only the first ~600 KB of each MP3
-# (enough for 10 s at any bitrate) rather than downloading full tracks.
-# Estimated final size: ~2.1 GB for 5,000 clips.
-
 import os
 import sys
 import time
@@ -19,9 +10,7 @@ import librosa
 import requests
 from tqdm import tqdm
 
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
+
 TARGET_CLIPS  = 5000       # number of clips to download
 CLIP_DURATION = 10         # seconds  — matches DURATION in config.py
 SAMPLE_RATE   = 22050      # Hz       — matches config.py
@@ -31,11 +20,6 @@ REQUEST_DELAY = 0.2        # seconds between requests  (be polite to the CDN)
 OUTPUT_DIR = (
     Path(__file__).parent.parent / "data" / "raw" / "fakemusiccaps" / "suno"
 )
-
-
-# ---------------------------------------------------------------------------
-# Download helper
-# ---------------------------------------------------------------------------
 
 def try_download_clip(audio_url: str, output_path: Path) -> bool:
     """
@@ -95,10 +79,6 @@ def try_download_clip(audio_url: str, output_path: Path) -> bool:
         return False
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -142,7 +122,6 @@ def main():
             if downloaded >= remaining:
                 break
 
-            # --- Quality filters -------------------------------------------
             # Skip private clips
             if not sample.get("is_public", True):
                 skipped += 1
@@ -165,7 +144,7 @@ def main():
                 skipped += 1
                 continue
 
-            # --- Build output filename from song ID ------------------------
+            # Build output filename from song ID
             clip_id    = sample.get("id", f"{len(existing) + downloaded:06d}")
             fname      = f"suno_{clip_id}.wav"
             output_path = OUTPUT_DIR / fname
@@ -175,7 +154,7 @@ def main():
                 skipped += 1
                 continue
 
-            # --- Download --------------------------------------------------
+            # Download
             if try_download_clip(audio_url, output_path):
                 downloaded += 1
                 pbar.update(1)
@@ -185,7 +164,7 @@ def main():
 
             time.sleep(REQUEST_DELAY)
 
-    # --- Summary -----------------------------------------------------------
+    # Summary
     total   = len(list(OUTPUT_DIR.glob("*.wav")))
     size_gb = sum(f.stat().st_size for f in OUTPUT_DIR.glob("*.wav")) / 1e9
 

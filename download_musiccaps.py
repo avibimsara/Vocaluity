@@ -1,5 +1,3 @@
-# download_musiccaps.py - Download real MusicCaps audio clips from YouTube
-
 import csv
 import io
 import urllib.request
