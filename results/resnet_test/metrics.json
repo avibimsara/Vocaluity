@@ -1,0 +1,9 @@
+{
+  "accuracy": 0.9727355901189387,
+  "precision": 0.9739185418168502,
+  "recall": 0.9727355901189387,
+  "f1": 0.9731339235649121,
+  "model": "resnet",
+  "epochs": 10,
+  "subsample_frac": null
+}
